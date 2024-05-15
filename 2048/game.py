@@ -7,6 +7,7 @@ import pygame
 from pygame.locals import *
 
 from logic import *
+from ai_agent import AI2048
 
 # TODO: Add a RULES button on start page
 # TODO: Add score keeping
@@ -153,7 +154,7 @@ def display(board, theme):
     pygame.display.update()
 
 
-def playGame(theme, difficulty):
+def playGame(theme, difficulty, ai_mode = None):
     """
     Main game loop function.
 
@@ -161,46 +162,44 @@ def playGame(theme, difficulty):
         theme (str): game interface theme
         difficulty (int): game difficulty, i.e., max. tile to get
     """
-    # initialise game status
-    status = "PLAY"
+    
+
     # set text colour according to theme
     if theme == "light":
         text_col = tuple(c["colour"][theme]["dark"])
     else:
         text_col = WHITE
     board = newGame(theme, text_col)
-
-    # main game loop
-    while True:
-        for event in pygame.event.get():
-            if event.type == QUIT or \
-                    (event.type == pygame.KEYDOWN and event.key == K_q):
-                # exit if q is pressed
-                pygame.quit()
-                sys.exit()
-
-            # a key has been pressed
-            if event.type == pygame.KEYDOWN:
-                # 'n' is pressed to restart the game
-                if event.key == pygame.K_n:
-                    board = restart(board, theme, text_col)
-
-                if str(event.key) not in c["keys"]:
-                    # no direction key was pressed
-                    continue
-                else:
-                    # convert the pressed key to w/a/s/d
+    status = "PLAY"
+    if ai_mode:
+        ai_agent = AI2048(ai_mode)
+        while status == "PLAY":
+            move_key = ai_agent.get_move(board)
+            new_board = move(move_key, deepcopy(board))
+            if new_board != board:
+                board = fillTwoOrFour(new_board)
+                display(board, theme)
+                status = checkGameStatus(board, difficulty)
+                board, status = winCheck(board, status, theme, text_col)
+            pygame.event.pump()  # Process event queue without blocking.
+    else:
+        while True:
+            for event in pygame.event.get():
+                if event.type == QUIT or (event.type == pygame.KEYDOWN and event.key == K_q):
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_n:
+                        board = restart(board, theme, text_col)
+                        continue
+                    if str(event.key) not in c["keys"]:
+                        continue
                     key = c["keys"][str(event.key)]
-
-                # obtain new board by performing move on old board's copy
-                new_board = move(key, deepcopy(board))
-
-                # proceed if change occurs in the board after making move
-                if new_board != board:
-                    # fill 2/4 after every move
-                    board = fillTwoOrFour(new_board)
-                    display(board, theme)
-                    # update game status
-                    status = checkGameStatus(board, difficulty)
-                    # check if the game is over
-                    (board, status) = winCheck(board, status, theme, text_col)
+                    new_board = move(key, deepcopy(board))
+                    if new_board != board:
+                        board = fillTwoOrFour(new_board)
+                        display(board, theme)
+                        status = checkGameStatus(board, difficulty)
+                        board, status = winCheck(board, status, theme, text_col)
+                        if status != "PLAY":
+                            return  # Exit if game over
