@@ -169,12 +169,14 @@ def playGame(theme, difficulty, ai_mode = None):
         text_col = tuple(c["colour"][theme]["dark"])
     else:
         text_col = WHITE
+    print(f"Starting game with theme: {theme}, difficulty: {difficulty}, AI mode: {ai_mode}")
     board = newGame(theme, text_col)
     status = "PLAY"
     if ai_mode:
         ai_agent = AI2048(ai_mode)
         while status == "PLAY":
             move_key = ai_agent.get_move(board)
+            print(f"Move decided: {move_key}")
             new_board = move(move_key, deepcopy(board))
             if new_board != board:
                 board = fillTwoOrFour(new_board)
