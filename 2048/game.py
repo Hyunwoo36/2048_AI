@@ -154,7 +154,7 @@ def display(board, theme):
     pygame.display.update()
 
 
-def playGame(theme, difficulty, ai_mode = None):
+def playGame(theme, difficulty, ai_mode = str):
     """
     Main game loop function.
 
@@ -170,6 +170,7 @@ def playGame(theme, difficulty, ai_mode = None):
     else:
         text_col = WHITE
     print(f"Starting game with theme: {theme}, difficulty: {difficulty}, AI mode: {ai_mode}")
+    time.sleep(5)
     board = newGame(theme, text_col)
     status = "PLAY"
     if ai_mode:
@@ -184,6 +185,7 @@ def playGame(theme, difficulty, ai_mode = None):
                 status = checkGameStatus(board, difficulty)
                 board, status = winCheck(board, status, theme, text_col)
             pygame.event.pump()  # Process event queue without blocking.
+            time.sleep(1)
     else:
         while True:
             for event in pygame.event.get():
