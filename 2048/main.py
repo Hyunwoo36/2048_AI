@@ -161,7 +161,7 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode(
         (c["size"], c["size"])
     )
-    pygame.display.set_caption("2048 by Rajit Banerjee")
+    pygame.display.set_caption("2048 by Rajit Banerjee/AI by the Boys")
 
     # display game icon in window
     icon = pygame.transform.scale(
