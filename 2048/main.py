@@ -6,6 +6,7 @@ import pygame
 from pygame.locals import *
 
 from game import playGame
+import statistics
 
 # We are trying to implement
 # Expectimax, A* Search, and Reinforcement Learning.
@@ -135,11 +136,9 @@ def showMenu():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                print("Mouse button pressed at:", pos)  # Debugging print statement
 
                 for key, button in buttons.items():
                     if button.isOver(pos):
-                        print(f"Button {key} clicked.")  # More specific debugging print statement
 
                         if key in ["A*", "E-MAX", "Random"]:
                             ai_mode = key.lower().replace("-", "")
@@ -148,10 +147,23 @@ def showMenu():
 
                         if key == "start" and ai_mode_selected:
                             print(f"Starting game with {theme}, {difficulty}, {ai_mode}")
-                            playGame(theme, difficulty, ai_mode=ai_mode)
+                            scores = run_games(10, theme, difficulty, ai_mode)
+                            average_score = statistics.mean(scores)
+                            print(f"Average score for {ai_mode}: {average_score}")
+                            print(f"All scores for {ai_mode}: ", scores)
                             return  # Exits after starting the game
 
-if __name__ == "__main__":
+def run_games(num_games, theme, difficulty, ai_mode):
+    scores = []
+    for i in range(num_games):
+        print(f"Starting game {i + 1} with {ai_mode} algorithm")
+        score = playGame(theme, difficulty, ai_mode)
+        print(f"Game {i + 1} score: {score}")
+        scores.append(score)
+    return scores
+
+def main():
+    global c, screen
     # load json data
     c = json.load(open("constants.json", "r"))
 
@@ -162,7 +174,7 @@ if __name__ == "__main__":
         (c["size"], c["size"])
     )
     pygame.display.set_caption("2048 by Rajit Banerjee/AI by the Boys")
-
+    
     # display game icon in window
     icon = pygame.transform.scale(
         pygame.image.load("images/icon.ico"), (32, 32)
@@ -174,3 +186,6 @@ if __name__ == "__main__":
 
     # display the start screen 
     showMenu()
+
+if __name__ == "__main__":
+    main()
