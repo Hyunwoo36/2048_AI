@@ -104,12 +104,13 @@ def showMenu():
     button_start_y = 375
     button_spacing = 15
     
-    first_button_x = 80  # Reduced starting x position
+    first_button_x = 30  # Reduced starting x position
 
     buttons = {
         "A*": Button(tuple(c["colour"][theme]["2048"]), first_button_x, button_start_y, button_width, button_height, "A*"),
         "E-MAX": Button(tuple(c["colour"][theme]["2048"]), first_button_x + button_width + button_spacing, button_start_y, button_width, button_height, "E-MAX"),
         "Random": Button(tuple(c["colour"][theme]["2048"]), first_button_x + 2 * (button_width + button_spacing), button_start_y, button_width, button_height, "Random"),
+        "Q-Learning": Button(tuple(c["colour"][theme]["2048"]), first_button_x + 3 * (button_width + button_spacing), button_start_y, button_width, button_height, "Q-Learning"),
         "start": Button(tuple(c["colour"][theme]["2048"]), 180, 450, 200, 50, "Start AI Game")
     }
 
@@ -140,8 +141,8 @@ def showMenu():
                 for key, button in buttons.items():
                     if button.isOver(pos):
 
-                        if key in ["A*", "E-MAX", "Random"]:
-                            ai_mode = key.lower().replace("-", "")
+                        if key in ["A*", "E-MAX", "Random", "Q-Learning"]:
+                            ai_mode = key.lower().replace("-", "").replace(" ", "_")
                             ai_mode_selected = True
                             print("AI Mode selected:", ai_mode)  # Debugging print statement
 
@@ -171,7 +172,7 @@ def main():
     pygame.init()
     # set up screen
     screen = pygame.display.set_mode(
-        (c["size"], c["size"])
+        (120 + c["size"], c["size"])
     )
     pygame.display.set_caption("2048 by Rajit Banerjee/AI by the Boys")
     
