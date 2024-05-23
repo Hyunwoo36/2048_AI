@@ -12,14 +12,11 @@ class AI2048:
             'emax': self.expectimax_algorithm,
             'random': self.random_moves
         }[self.mode]  # Directly access the algorithm
-        print(f"AI mode initialized: {self.mode}")  # Debug: Check which mode is initialized
 
     def get_move(self, board):
-        print(f"Using {self.mode} algorithm")  # Debug: Check which algorithm is used
         return self.algorithm(board)
 
     def astar_algorithm(self, board):
-        print("A* move!!")
         return self.a_star_search(board)
 
     def expectimax_algorithm(self, board):

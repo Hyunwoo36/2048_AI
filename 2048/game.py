@@ -48,24 +48,28 @@ def winCheck(board, status, theme, text_col):
             msg = "GAME OVER!"
 
         screen.blit(my_font.render(msg, 1, text_col), (140, 180))
-        # Ask user to play again
-        screen.blit(my_font.render(
-            "Play again? (y/ n)", 1, text_col), (80, 255))
-
         pygame.display.update()
-
-        while True:
-            for event in pygame.event.get():
-                if event.type == QUIT or \
-                        (event.type == pygame.KEYDOWN and event.key == K_n):
-                    pygame.quit()
-                    sys.exit()
-
-                if event.type == pygame.KEYDOWN and event.key == K_y:
-                    # 'y' is pressed to start a new game
-                    board = newGame(theme, text_col)
-                    return (board, "PLAY")
+        time.sleep(1)
     return (board, status)
+
+        # Ask user to play again
+    #     screen.blit(my_font.render(
+    #         "Play again? (y/ n)", 1, text_col), (80, 255))
+
+    #     pygame.display.update()
+
+    #     while True:
+    #         for event in pygame.event.get():
+    #             if event.type == QUIT or \
+    #                     (event.type == pygame.KEYDOWN and event.key == K_n):
+    #                 pygame.quit()
+    #                 sys.exit()
+
+    #             if event.type == pygame.KEYDOWN and event.key == K_y:
+    #                 # 'y' is pressed to start a new game
+    #                 board = newGame(theme, text_col)
+    #                 return (board, "PLAY")
+    # return (board, status)
 
 
 def newGame(theme, text_col):
@@ -169,33 +173,35 @@ def playGame(theme, difficulty, ai_mode = str):
         text_col = tuple(c["colour"][theme]["dark"])
     else:
         text_col = WHITE
-    print(f"Starting game with theme: {theme}, difficulty: {difficulty}, AI mode: {ai_mode}")
-    time.sleep(5)
+    
+    # time.sleep(5)
     board = newGame(theme, text_col)
     status = "PLAY"
+    final_score = 0
+
     if ai_mode:
         ai_agent = AI2048(ai_mode)
         while status == "PLAY":
             move_key = ai_agent.get_move(board)
-            print(f"Move decided: {move_key}")
             new_board = move(move_key, deepcopy(board))
             if new_board != board:
                 board = fillTwoOrFour(new_board)
                 display(board, theme)
                 status = checkGameStatus(board, difficulty)
                 board, status = winCheck(board, status, theme, text_col)
+                final_score = sum(sum(row) for row in board)
             pygame.event.pump()  # Process event queue without blocking.
-            time.sleep(1)
+            # time.sleep(1)
     else:
-        while True:
+        while status == "PLAY":
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == pygame.KEYDOWN and event.key == K_q):
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_n:
-                        board = restart(board, theme, text_col)
-                        continue
+                    # if event.key == pygame.K_n:
+                    #     board = restart(board, theme, text_col)
+                    #     continue
                     if str(event.key) not in c["keys"]:
                         continue
                     key = c["keys"][str(event.key)]
@@ -205,5 +211,5 @@ def playGame(theme, difficulty, ai_mode = str):
                         display(board, theme)
                         status = checkGameStatus(board, difficulty)
                         board, status = winCheck(board, status, theme, text_col)
-                        if status != "PLAY":
-                            return  # Exit if game over
+                        final_score = sum(sum(row) for row in board)
+    return final_score
