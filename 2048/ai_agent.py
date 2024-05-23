@@ -1,6 +1,7 @@
 import random
 import heapq
 from copy import deepcopy
+import numpy as np
 
 class AI2048:
     def __init__(self, mode=None):
@@ -11,7 +12,7 @@ class AI2048:
             'a*': self.astar_algorithm,
             'emax': self.expectimax_algorithm,
             'random': self.random_moves
-        }[self.mode]  # Directly access the algorithm
+        }[self.mode]
 
     def get_move(self, board):
         return self.algorithm(board)
@@ -83,3 +84,44 @@ def checkGameStatus(board, difficulty):
     """
     # Implement the logic for checking the game status here
     return 'PLAY'
+
+
+
+# Q LEARNING
+class QLearningAgent:
+    def __init__(self, actions, alpha=0.1, gamma=0.9, epsilon=0.1):
+        self.q_table = {}  # State-action values
+        self.actions = actions
+        self.alpha = alpha  # Learning rate
+        self.gamma = gamma  # Discount factor
+        self.epsilon = epsilon  # Exploration rate
+
+    def get_state(self, board):
+        return str(board)
+
+    def choose_action(self, state):
+        if random.uniform(0, 1) < self.epsilon:
+            return random.choice(self.actions)  # Explore
+        else:
+            return self.get_best_action(state)  # Exploit
+
+    def get_best_action(self, state):
+        state_actions = self.q_table.get(state, {})
+        return max(state_actions, key=state_actions.get, default=random.choice(self.actions))
+
+    def learn(self, state, action, reward, next_state):
+        state_actions = self.q_table.setdefault(state, {})
+        next_state_actions = self.q_table.setdefault(next_state, {})  # Initialize next_state in Q-table
+        best_next_action = max(next_state_actions, key=next_state_actions.get, default=None)
+        
+        target = reward + self.gamma * (next_state_actions.get(best_next_action, 0))
+        state_actions[action] = state_actions.get(action, 0) + self.alpha * (target - state_actions.get(action, 0))
+
+    def update(self, state, action, reward, next_state):
+        self.learn(state, action, reward, next_state)
+        state_actions = self.q_table.setdefault(state, {})
+        next_state_actions = self.q_table.setdefault(next_state, {})  # Ensure next_state is in Q-table
+        best_next_action = max(next_state_actions, key=next_state_actions.get, default=random.choice(self.actions))
+        self.q_table[state][action] = state_actions.get(action, 0) + self.alpha * (
+            reward + self.gamma * next_state_actions.get(best_next_action, 0) - state_actions.get(action, 0)
+        )

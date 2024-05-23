@@ -7,7 +7,7 @@ import pygame
 from pygame.locals import *
 
 from logic import *
-from ai_agent import AI2048
+from ai_agent import AI2048, QLearningAgent
 
 # TODO: Add a RULES button on start page
 # TODO: Add score keeping
@@ -178,8 +178,23 @@ def playGame(theme, difficulty, ai_mode = str):
     board = newGame(theme, text_col)
     status = "PLAY"
     final_score = 0
-
-    if ai_mode:
+    if ai_mode == "qlearning":
+            agent = QLearningAgent(actions=["w", "a", "s", "d"])
+            while status == "PLAY":
+                state = agent.get_state(board)
+                action = agent.choose_action(state)
+                new_board = move(action, deepcopy(board))
+                if new_board != board:
+                    reward = sum(sum(row) for row in new_board) - sum(sum(row) for row in board)
+                    board = fillTwoOrFour(new_board)
+                    display(board, theme)
+                    next_state = agent.get_state(board)
+                    agent.update(state, action, reward, next_state)
+                    status = checkGameStatus(board, difficulty)
+                    board, status = winCheck(board, status, theme, text_col)
+                    final_score = sum(sum(row) for row in board)
+                pygame.event.pump()
+    else:
         ai_agent = AI2048(ai_mode)
         while status == "PLAY":
             move_key = ai_agent.get_move(board)
@@ -190,26 +205,5 @@ def playGame(theme, difficulty, ai_mode = str):
                 status = checkGameStatus(board, difficulty)
                 board, status = winCheck(board, status, theme, text_col)
                 final_score = sum(sum(row) for row in board)
-            pygame.event.pump()  # Process event queue without blocking.
-            # time.sleep(1)
-    else:
-        while status == "PLAY":
-            for event in pygame.event.get():
-                if event.type == QUIT or (event.type == pygame.KEYDOWN and event.key == K_q):
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    # if event.key == pygame.K_n:
-                    #     board = restart(board, theme, text_col)
-                    #     continue
-                    if str(event.key) not in c["keys"]:
-                        continue
-                    key = c["keys"][str(event.key)]
-                    new_board = move(key, deepcopy(board))
-                    if new_board != board:
-                        board = fillTwoOrFour(new_board)
-                        display(board, theme)
-                        status = checkGameStatus(board, difficulty)
-                        board, status = winCheck(board, status, theme, text_col)
-                        final_score = sum(sum(row) for row in board)
+            pygame.event.pump()
     return final_score
