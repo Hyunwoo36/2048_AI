@@ -7,6 +7,7 @@ from pygame.locals import *
 from .logic import *
 from ai.ai_agent import AI2048
 from ai.qlearning_agent import QLearningAgent
+from .expectimax_agent import ExpectimaxAgent
 
 pygame.init()
 c = json.load(open("constants.json", "r"))
@@ -92,6 +93,18 @@ def play_game(theme, difficulty, ai_mode):
                 board, status = win_check(board, status, theme, text_col)
                 final_score = sum(sum(row) for row in board)
             pygame.event.pump()
+    elif ai_mode == "expectimax":
+        ai_agent = ExpectimaxAgent()
+        while status == "PLAY":
+            move_key = ai_agent.getNextBestMoveExpectiminimax(board)
+            new_board = move(move_key, deepcopy(board))
+            if new_board != board:
+                board = fill_two_or_four(new_board)
+                display(board, theme)
+                status = check_game_status(board, difficulty)
+                board, status = win_check(board, status, theme, text_col)
+                final_score = sum(sum(row) for row in board)
+            pygame.event.pump()  
     else:
         ai_agent = AI2048(ai_mode)
         while status == "PLAY":
