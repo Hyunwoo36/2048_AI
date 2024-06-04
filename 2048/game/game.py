@@ -7,12 +7,15 @@ from pygame.locals import *
 from .logic import *
 from ai.ai_agent import AI2048
 from ai.qlearning_agent import QLearningAgent
+from ai.dqn_agent import DQNAgent
+import numpy as np
 
 pygame.init()
 c = json.load(open("constants.json", "r"))
 screen = pygame.display.set_mode((c["size"], c["size"]))
 my_font = pygame.font.SysFont(c["font"], c["font_size"], bold=True)
 WHITE = (255, 255, 255)
+model_save_path = "model_weights.h5"
 
 def win_check(board, status, theme, text_col):
     if status != "PLAY":
@@ -85,22 +88,63 @@ def play_game(theme, difficulty, ai_mode):
     status = "PLAY"
     final_score = 0
 
-    if ai_mode == "qlearning":
-        agent = QLearningAgent()
+    # if ai_mode == "qlearning":
+    #     agent = QLearningAgent()
+    #     while status == "PLAY":
+    #         state = agent.get_state(board)
+    #         action = agent.choose_action(state)
+    #         new_board = move(action, deepcopy(board))
+    #         if new_board != board:
+    #             reward = calculate_reward(board, new_board)
+    #             board = fill_two_or_four(new_board)
+    #             display(board, theme)
+    #             next_state = agent.get_state(board)
+    #             agent.update(state, action, reward, next_state)
+    #             status = check_game_status(board, difficulty)
+    #             board, status = win_check(board, status, theme, text_col)
+    #             final_score = sum(sum(row) for row in board)
+    #         pygame.event.pump()
+    if ai_mode == "dqn":
+        state_size = 16  # Adjust this based on your state representation
+        action_size = 4   # w, a, s, d
+        agent = DQNAgent(state_size, action_size)
+        update_target_every = 5  # Update target model every 5 episodes
+        episode_count = 0
+
+        # Optionally load weights if a path is provided
+        if model_save_path:
+            try:
+                agent.load(model_save_path)
+                print(f"Loaded model weights from {model_save_path}")
+            except:
+                print(f"Failed to load model weights from {model_save_path}")
+
         while status == "PLAY":
             state = agent.get_state(board)
-            action = agent.choose_action(state)
-            new_board = move(action, deepcopy(board))
+            action = agent.act(state)
+            new_board = move(agent.actions[action], deepcopy(board))
             if new_board != board:
                 reward = calculate_reward(board, new_board)
+                done = status != "PLAY"
+                next_state = agent.get_state(new_board)
+                agent.remember(state, action, reward, next_state, done)
                 board = fill_two_or_four(new_board)
                 display(board, theme)
-                next_state = agent.get_state(board)
-                agent.update(state, action, reward, next_state)
                 status = check_game_status(board, difficulty)
                 board, status = win_check(board, status, theme, text_col)
                 final_score = sum(sum(row) for row in board)
+                agent.replay()
             pygame.event.pump()
+
+            # Update the target model less frequently
+            episode_count += 1
+            if episode_count % update_target_every == 0:
+                agent.update_target_model()
+
+        # Save the model weights after training
+        if model_save_path:
+            agent.save(model_save_path)
+            print(f"Saved model weights to {model_save_path}")
     else:
         ai_agent = AI2048(ai_mode)
         while status == "PLAY":

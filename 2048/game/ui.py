@@ -70,6 +70,7 @@ def show_menu(constants, screen, my_font):
         "E-MAX": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + button_width + button_spacing, button_start_y, button_width, button_height, "E-MAX"),
         "Random": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + 2 * (button_width + button_spacing), button_start_y, button_width, button_height, "Random"),
         "Q-Learning": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + 3 * (button_width + button_spacing), button_start_y, button_width, button_height, "Q-Learning"),
+        "DQN": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + 4 * (button_width + button_spacing), button_start_y, button_width, button_height, "DQN"),
         "start": Button(tuple(constants["colour"][theme]["2048"]), 180, 450, 200, 50, "Start AI Game")
     }
 
@@ -95,7 +96,7 @@ def show_menu(constants, screen, my_font):
 
                 for key, button in buttons.items():
                     if button.is_over(pos):
-                        if key in ["A*", "E-MAX", "Random", "Q-Learning"]:
+                        if key in ["A*", "E-MAX", "Random", "Q-Learning", "DQN"]:
                             ai_mode = key.lower().replace("-", "").replace(" ", "_")
                             ai_mode_selected = True
 
