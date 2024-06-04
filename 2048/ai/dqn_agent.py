@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.optimizers import Adam
 
 class DQNAgent:
-    def __init__(self, state_size, action_size, gamma=0.99, epsilon=0.9, epsilon_min=0.01, epsilon_decay=0.9999, learning_rate=5e-5, batch_size=64, memory_size=50000):
+    def __init__(self, state_size, action_size, gamma=0.99, epsilon=0.9, epsilon_min=0.01, epsilon_decay=0.995, learning_rate=0.00025, batch_size=64, memory_size=50000):
         self.state_size = state_size
         self.action_size = action_size
         self.gamma = gamma
@@ -60,26 +60,23 @@ class DQNAgent:
     def replay(self):
         if len(self.memory) < self.batch_size:
             return
+        
         minibatch = random.sample(self.memory, self.batch_size)
-        states = np.array([experience[0] for experience in minibatch])
+        states = np.array([experience[0] for experience in minibatch]).reshape(self.batch_size, 4, 4, 1)
         actions = np.array([experience[1] for experience in minibatch])
         rewards = np.array([experience[2] for experience in minibatch])
-        next_states = np.array([experience[3] for experience in minibatch])
+        next_states = np.array([experience[3] for experience in minibatch]).reshape(self.batch_size, 4, 4, 1)
         dones = np.array([experience[4] for experience in minibatch])
-        # Debug: print shapes
-        print(f"states shape: {states.shape}")
-        print(f"next_states shape: {next_states.shape}")
-
+        
         target = self.model.predict(states)
         target_next = self.target_model.predict(next_states)
 
-         ## ERROR here!
-        print("target shape: ", target.shape)
-        print("target_next shape: ", target_next.shape)
-
         for i in range(self.batch_size):
-            target[i][actions[i]] = rewards[i] + self.gamma * np.amax(target_next[i]) * (1 - dones[i])
-
+            if dones[i]:
+                target[i][actions[i]] = rewards[i]
+            else:
+                target[i][actions[i]] = rewards[i] + self.gamma * np.amax(target_next[i])
+        
         self.model.fit(states, target, epochs=1, verbose=0)
 
         if self.epsilon > self.epsilon_min:

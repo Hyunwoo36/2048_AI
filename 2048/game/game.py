@@ -74,13 +74,16 @@ def display(board, theme):
     pygame.display.update()
 
 def calculate_reward(board, new_board):
-    # TODO: Implement a more complex reward function
     score_diff = sum(sum(row) for row in new_board) - sum(sum(row) for row in board)
     max_tile_new = max(max(row) for row in new_board)
     max_tile_old = max(max(row) for row in board)
-    bonus = 0.1 * (max_tile_new - max_tile_old)  # Adjust the bonus factor (0.1)
+    empty_tiles_new = sum(row.count(0) for row in new_board)
+    empty_tiles_old = sum(row.count(0) for row in board)
+    
+    bonus = 0.1 * (max_tile_new - max_tile_old)  # Bonus for achieving higher tiles
+    empty_tile_bonus = 0.1 * (empty_tiles_new - empty_tiles_old)  # Bonus for creating empty tiles
 
-    return score_diff + bonus
+    return score_diff + bonus + empty_tile_bonus
 
 def play_game(theme, difficulty, ai_mode):
     text_col = tuple(c["colour"][theme]["dark"]) if theme == "light" else WHITE
@@ -132,7 +135,7 @@ def play_game(theme, difficulty, ai_mode):
                 display(board, theme)
                 status = check_game_status(board, difficulty)
                 board, status = win_check(board, status, theme, text_col)
-                final_score = sum(sum(row) for row in board)
+                final_score = max(max(row) for row in board)
                 agent.replay()
             pygame.event.pump()
 
