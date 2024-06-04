@@ -29,7 +29,9 @@ class AI2048:
     def heuristic(self, board):
         max_tile = max(cell for row in board for cell in row)
         empty_spaces = sum(1 for row in board for cell in row if cell == 0)
+        
         clustering_penalty = 0
+        monotonicity_penalty = 0
 
         for i in range(4):
             for j in range(4):
@@ -38,9 +40,18 @@ class AI2048:
                         ni, nj = i + di, j + dj
                         if 0 <= ni < 4 and 0 <= nj < 4 and board[ni][nj] != 0:
                             clustering_penalty += abs(board[i][j] - board[ni][nj])
+        
+        for row in board:
+            for i in range(3):
+                if row[i] > row[i + 1]:
+                    monotonicity_penalty += row[i] - row[i + 1]
+        
+        for col in range(4):
+            for i in range(3):
+                if board[i][col] > board[i + 1][col]:
+                    monotonicity_penalty += board[i][col] - board[i + 1][col]
 
-        return max_tile + empty_spaces * 10 - clustering_penalty
-
+        return max_tile + empty_spaces * 10 - clustering_penalty - monotonicity_penalty
 
     def possible_moves(self, board):
         moves = []
@@ -73,7 +84,7 @@ class AI2048:
 
             max_search_depth = max(max_search_depth, depth)
 
-            if check_game_status(current_board, 2048) != 'PLAY':
+            if check_game_status(current_board, 10000) != 'PLAY':  # Set a high target value
                 if path:
                     print(f"Chosen move: {path[0]}, Path: {path}, Cost: {current_node.cost}, Depth: {depth}")
                     print(f"Max search depth: {max_search_depth}")

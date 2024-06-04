@@ -70,6 +70,15 @@ def display(board, theme):
                 screen.blit(my_font.render("{:>4}".format(board[i][j]), 1, text_colour), (j * box + 2.5 * padding, i * box + 7 * padding))
     pygame.display.update()
 
+def calculate_reward(board, new_board):
+    # TODO: Implement a more complex reward function
+    score_diff = sum(sum(row) for row in new_board) - sum(sum(row) for row in board)
+    max_tile_new = max(max(row) for row in new_board)
+    max_tile_old = max(max(row) for row in board)
+    bonus = 0.1 * (max_tile_new - max_tile_old)  # Adjust the bonus factor (0.1)
+
+    return score_diff + bonus
+
 def play_game(theme, difficulty, ai_mode):
     text_col = tuple(c["colour"][theme]["dark"]) if theme == "light" else WHITE
     board = new_game(theme, text_col)
@@ -77,13 +86,13 @@ def play_game(theme, difficulty, ai_mode):
     final_score = 0
 
     if ai_mode == "qlearning":
-        agent = QLearningAgent(actions=["w", "a", "s", "d"])
+        agent = QLearningAgent()
         while status == "PLAY":
             state = agent.get_state(board)
             action = agent.choose_action(state)
             new_board = move(action, deepcopy(board))
             if new_board != board:
-                reward = sum(sum(row) for row in new_board) - sum(sum(row) for row in board)
+                reward = calculate_reward(board, new_board)
                 board = fill_two_or_four(new_board)
                 display(board, theme)
                 next_state = agent.get_state(board)
