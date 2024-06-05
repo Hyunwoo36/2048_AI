@@ -100,96 +100,56 @@ def play_game(agent, theme, difficulty, ai_mode):
     steps_without_improvement = 0
     last_max_tile = 0
 
-    if ai_mode == "dqn":
-        total_reward = 0
+    while status == "PLAY":
+        state = agent.get_state(board)
+        action = agent.choose_action(state)
+        print(f"Action: {action}, State: {state}")
+        print("Board before action:")
+        print(board)
+        new_board = deepcopy(board)
+        new_board, valid_move = move(action, new_board)
+        if valid_move:
+            reward = calculate_reward(board, new_board, valid_move)
+            done = status != "PLAY"
+            next_state = agent.get_state(new_board)
+            agent.update(state, action, reward, next_state)
+            print(f"State: {state}, Action: {action}, Reward: {reward}, Next State: {next_state}, Done: {done}")
+            print("Board after action:")
+            print(new_board)
+            board = fill_two_or_four(new_board)
+            display(board, theme)
+            status = check_game_status(board, difficulty)
+            board, status = win_check(board, status, theme, text_col)
+            final_score = max(max(row) for row in board)
+            steps_without_improvement = 0 if max(max(row) for row in board) > last_max_tile else steps_without_improvement + 1
+            last_max_tile = max(max(row) for row in board)
+        else:
+            print("Invalid move.")
+            invalid_moves += 1
+            steps_without_improvement += 1
+            agent.update(state, action, -10, state)  # Penalize invalid move
+        pygame.event.pump()
 
-        while status == "PLAY":
-            state = agent.get_state(board)
-            action = agent.act(state)
-            print(f"Action: {action}, State: {state}")
-            print("Board before action:")
-            print(board)
-            new_board = deepcopy(board)
-            new_board, valid_move = move(agent.actions[action], new_board)
-            if valid_move:
-                reward = calculate_reward(board, new_board, valid_move)
-                total_reward += reward
-                done = status != "PLAY"
-                next_state = agent.get_state(new_board)
-                agent.remember(state, action, reward, next_state, done)
-                print(f"State: {state}, Action: {action}, Reward: {reward}, Next State: {next_state}, Done: {done}")
-                print("Board after action:")
-                print(new_board)
-                board = fill_two_or_four(new_board)
-                display(board, theme)
-                status = check_game_status(board, difficulty)
-                board, status = win_check(board, status, theme, text_col)
-                final_score = max(max(row) for row in board)
-                state = next_state
-                agent.replay()
-                steps_without_improvement = 0 if max(max(row) for row in board) > last_max_tile else steps_without_improvement + 1
-                last_max_tile = max(max(row) for row in board)
-            else:
-                print("Invalid move.")
-                invalid_moves += 1
-                steps_without_improvement += 1
-                agent.remember(state, action, -10, state, False)  # Penalize invalid move
-            pygame.event.pump()
+        if steps_without_improvement >= max_steps_without_improvement:
+            break
 
-            if steps_without_improvement >= max_steps_without_improvement:
-                break
-
-        print(f"Episode completed, Total Reward: {total_reward}, Invalid Moves: {invalid_moves}")
-        agent.rewards_history.append(total_reward)
-    else:
-        ai_agent = AI2048(ai_mode)
-        while status == "PLAY":
-            move_key = ai_agent.get_move(board)
-            new_board, valid_move = move(move_key, deepcopy(board))
-            if valid_move:
-                board = fill_two_or_four(new_board)
-                display(board, theme)
-                status = check_game_status(board, difficulty)
-                board, status = win_check(board, status, theme, text_col)
-                final_score = sum(sum(row) for row in board)
-            pygame.event.pump()
+    print(f"Episode completed, Total Reward: {final_score}, Invalid Moves: {invalid_moves}")
     return final_score
 
 def run_games(num_games, theme, difficulty, ai_mode):
     scores = []
 
-    # Initialize the DQN agent once outside the game loop
-    if ai_mode == "dqn":
-        state_size = 16  # Adjust this based on your state representation
-        action_size = 4   # w, a, s, d
-        agent = DQNAgent(state_size, action_size)
-        
-        # Optionally load weights if a path is provided
-        if model_save_path:
-            try:
-                agent.load(model_save_path)
-                print(f"Loaded model weights from {model_save_path}")
-            except Exception as e:
-                print(f"Failed to load model weights from {model_save_path}: {e}")
-    else:
-        agent = None
+    if ai_mode == "qlearning":
+        agent = QLearningAgent()
 
     for i in range(num_games):
         score = play_game(agent, theme, difficulty, ai_mode)
         scores.append(score)
 
-    if ai_mode == "dqn":
-        # Plotting the rewards history after all games are completed
-        print("Agent Rewards history: ", agent.rewards_history)
-        plt.plot(agent.rewards_history)
-        plt.title('Training progress')
-        plt.xlabel('Episode')
-        plt.ylabel('Total reward')
-        plt.show()
-
-        # Save the model weights after training
-        if model_save_path:
-            agent.save(model_save_path)
-            print(f"Saved model weights to {model_save_path}")
+    # Save the Q-learning model (Q-table)
+    if ai_mode == "qlearning":
+        with open(model_save_path, 'w') as file:
+            json.dump(agent.q_table, file)
+        print(f"Saved Q-learning model to {model_save_path}")
 
     return scores

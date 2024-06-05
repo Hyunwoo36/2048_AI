@@ -1,12 +1,13 @@
 import random
 
 class QLearningAgent:
-    def __init__(self, alpha=0.1, gamma=0.9, epsilon=0.1):
+    def __init__(self, alpha=0.1, gamma=0.9, epsilon=0.1, epsilon_decay=0.995):
         self.q_table = {}
         self.actions = ["w", "a", "s", "d"]
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
 
     def get_state(self, board):
         return tuple(cell for row in board for cell in row)
@@ -23,14 +24,13 @@ class QLearningAgent:
 
     def update(self, state, action, reward, next_state):
         if state not in self.q_table:
-            self.q_table[state] = {}  # Initialize an empty dictionary for the new state
+            self.q_table[state] = {a: 0 for a in self.actions}
 
-        state_actions = self.q_table.setdefault(next_state, {})
-        best_next_action = max(state_actions, key=state_actions.get, default=None)
+        state_actions = self.q_table.setdefault(next_state, {a: 0 for a in self.actions})
+        best_next_action = self.get_best_action(next_state)
 
         target = reward + self.gamma * state_actions.get(best_next_action, 0)
-        self.q_table[state][action] = self.q_table.get(state, {}).get(action, 0) + self.alpha * (target - self.q_table.get(state, {}).get(action, 0))
+        self.q_table[state][action] += self.alpha * (target - self.q_table[state][action])
 
         # Decay epsilon
-        # self.epsilon *= self.epsilon_decay
-
+        self.epsilon *= self.epsilon_decay
