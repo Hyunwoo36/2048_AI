@@ -90,7 +90,6 @@ def calculate_reward(board, new_board, valid_move):
 
     return score_diff + bonus + empty_tile_bonus + move_bonus
 
-
 def play_game(agent, theme, difficulty, ai_mode):
     text_col = tuple(c["colour"][theme]["dark"]) if theme == "light" else WHITE
     board = new_game(theme, text_col)

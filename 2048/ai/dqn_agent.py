@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.optimizers import Adam
 
 class DQNAgent:
-    def __init__(self, state_size, action_size, gamma=0.99, epsilon=0.9, epsilon_min=0.01, epsilon_decay=0.995, learning_rate=0.00025, batch_size=64, memory_size=50000):
+    def __init__(self, state_size, action_size, gamma=0.99, epsilon=0.9, epsilon_min=0.01, epsilon_decay=0.99, learning_rate=5e-5, batch_size=64, memory_size=50000):
         self.state_size = state_size
         self.action_size = action_size
         self.gamma = gamma
@@ -64,21 +64,14 @@ class DQNAgent:
         
         print("Predicting target values")
         target = self.model.predict(states)
-        print("Predicting next state values")
-        target_next = self.model.predict(next_states)
         print("Predicting target model values")
         target_val = self.target_model.predict(next_states)
 
         for i in range(self.batch_size):
-             # Log the initial Q-values
-            print(f"Initial Q-Values for State {i}: {target[i]}")
             if dones[i]:
                 target[i][actions[i]] = rewards[i]
             else:
-                a = np.argmax(target_next[i])
-                target[i][actions[i]] = rewards[i] + self.gamma * target_val[i][a]
-              # Log the updated Q-values
-            print(f"Updated Q-Values for State {i}: {target[i]}")
+                target[i][actions[i]] = rewards[i] + self.gamma * np.amax(target_val[i])
 
         self.model.fit(states, target, epochs=1, verbose=0)
 
