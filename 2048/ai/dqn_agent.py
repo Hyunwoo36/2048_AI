@@ -21,6 +21,7 @@ class DQNAgent:
         self.target_model = self._build_model()
         self.update_target_model()
         self.actions = ['w', 'a', 's', 'd']
+        self.rewards_history = []
 
     def conv_block(self, input_dim, output_dim):
         d = output_dim // 4
@@ -69,14 +70,16 @@ class DQNAgent:
         dones = np.array([experience[4] for experience in minibatch])
         
         target = self.model.predict(states)
-        target_next = self.target_model.predict(next_states)
+        target_next = self.model.predict(next_states)
+        target_val = self.target_model.predict(next_states)
 
         for i in range(self.batch_size):
             if dones[i]:
                 target[i][actions[i]] = rewards[i]
             else:
-                target[i][actions[i]] = rewards[i] + self.gamma * np.amax(target_next[i])
-        
+                a = np.argmax(target_next[i])
+                target[i][actions[i]] = rewards[i] + self.gamma * target_val[i][a]
+
         self.model.fit(states, target, epochs=1, verbose=0)
 
         if self.epsilon > self.epsilon_min:

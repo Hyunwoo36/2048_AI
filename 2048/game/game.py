@@ -9,13 +9,14 @@ from ai.ai_agent import AI2048
 from ai.qlearning_agent import QLearningAgent
 from ai.dqn_agent import DQNAgent
 import numpy as np
+import matplotlib.pyplot as plt
 
 pygame.init()
 c = json.load(open("constants.json", "r"))
 screen = pygame.display.set_mode((c["size"], c["size"]))
 my_font = pygame.font.SysFont(c["font"], c["font_size"], bold=True)
 WHITE = (255, 255, 255)
-model_save_path = "model_weights.h5"
+model_save_path = "model.weights.h5"
 
 def win_check(board, status, theme, text_col):
     if status != "PLAY":
@@ -85,42 +86,29 @@ def calculate_reward(board, new_board):
 
     return score_diff + bonus + empty_tile_bonus
 
-def play_game(theme, difficulty, ai_mode):
+def play_game(agent, theme, difficulty, ai_mode):
     text_col = tuple(c["colour"][theme]["dark"]) if theme == "light" else WHITE
     board = new_game(theme, text_col)
     status = "PLAY"
     final_score = 0
 
-    # if ai_mode == "qlearning":
-    #     agent = QLearningAgent()
-    #     while status == "PLAY":
-    #         state = agent.get_state(board)
-    #         action = agent.choose_action(state)
-    #         new_board = move(action, deepcopy(board))
-    #         if new_board != board:
-    #             reward = calculate_reward(board, new_board)
-    #             board = fill_two_or_four(new_board)
-    #             display(board, theme)
-    #             next_state = agent.get_state(board)
-    #             agent.update(state, action, reward, next_state)
-    #             status = check_game_status(board, difficulty)
-    #             board, status = win_check(board, status, theme, text_col)
-    #             final_score = sum(sum(row) for row in board)
-    #         pygame.event.pump()
-    if ai_mode == "dqn":
-        state_size = 16  # Adjust this based on your state representation
-        action_size = 4   # w, a, s, d
-        agent = DQNAgent(state_size, action_size)
-        update_target_every = 5  # Update target model every 5 episodes
-        episode_count = 0
-
-        # Optionally load weights if a path is provided
-        if model_save_path:
-            try:
-                agent.load(model_save_path)
-                print(f"Loaded model weights from {model_save_path}")
-            except:
-                print(f"Failed to load model weights from {model_save_path}")
+    if ai_mode == "qlearning":
+        while status == "PLAY":
+            state = agent.get_state(board)
+            action = agent.choose_action(state)
+            new_board = move(action, deepcopy(board))
+            if new_board != board:
+                reward = calculate_reward(board, new_board)
+                board = fill_two_or_four(new_board)
+                display(board, theme)
+                next_state = agent.get_state(board)
+                agent.update(state, action, reward, next_state)
+                status = check_game_status(board, difficulty)
+                board, status = win_check(board, status, theme, text_col)
+                final_score = sum(sum(row) for row in board)
+            pygame.event.pump()
+    elif ai_mode == "dqn":
+        total_reward = 0
 
         while status == "PLAY":
             state = agent.get_state(board)
@@ -128,6 +116,7 @@ def play_game(theme, difficulty, ai_mode):
             new_board = move(agent.actions[action], deepcopy(board))
             if new_board != board:
                 reward = calculate_reward(board, new_board)
+                total_reward += reward
                 done = status != "PLAY"
                 next_state = agent.get_state(new_board)
                 agent.remember(state, action, reward, next_state, done)
@@ -136,18 +125,12 @@ def play_game(theme, difficulty, ai_mode):
                 status = check_game_status(board, difficulty)
                 board, status = win_check(board, status, theme, text_col)
                 final_score = max(max(row) for row in board)
+                state = next_state
                 agent.replay()
             pygame.event.pump()
 
-            # Update the target model less frequently
-            episode_count += 1
-            if episode_count % update_target_every == 0:
-                agent.update_target_model()
-
-        # Save the model weights after training
-        if model_save_path:
-            agent.save(model_save_path)
-            print(f"Saved model weights to {model_save_path}")
+        print(f"Episode completed, Total Reward: {total_reward}")
+        agent.rewards_history.append(total_reward)
     else:
         ai_agent = AI2048(ai_mode)
         while status == "PLAY":
@@ -164,7 +147,39 @@ def play_game(theme, difficulty, ai_mode):
 
 def run_games(num_games, theme, difficulty, ai_mode):
     scores = []
+
+    # Initialize the DQN agent once outside the game loop
+    if ai_mode == "dqn":
+        state_size = 16  # Adjust this based on your state representation
+        action_size = 4   # w, a, s, d
+        agent = DQNAgent(state_size, action_size)
+        
+        # Optionally load weights if a path is provided
+        if model_save_path:
+            try:
+                agent.load(model_save_path)
+                print(f"Loaded model weights from {model_save_path}")
+            except Exception as e:
+                print(f"Failed to load model weights from {model_save_path}: {e}")
+    else:
+        agent = None
+
     for i in range(num_games):
-        score = play_game(theme, difficulty, ai_mode)
+        score = play_game(agent, theme, difficulty, ai_mode)
         scores.append(score)
+
+    if ai_mode == "dqn":
+        # Plotting the rewards history after all games are completed
+        print("Agent Rewards history: ", agent.rewards_history)
+        plt.plot(agent.rewards_history)
+        plt.title('Training progress')
+        plt.xlabel('Episode')
+        plt.ylabel('Total reward')
+        plt.show()
+
+        # Save the model weights after training
+        if model_save_path:
+            agent.save(model_save_path)
+            print(f"Saved model weights to {model_save_path}")
+
     return scores
