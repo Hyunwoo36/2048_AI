@@ -1,14 +1,17 @@
 import random
+from copy import deepcopy
 
 def move(direction, board):
+    original_board = deepcopy(board)
     if direction == "w":
-        return move_up(board)
+        board = move_up(board)
     if direction == "s":
-        return move_down(board)
+        board = move_down(board)
     if direction == "a":
-        return move_left(board)
+        board = move_left(board)
     if direction == "d":
-        return move_right(board)
+        board = move_right(board)
+    return board, board != original_board
 
 def check_game_status(board, max_tile=2048):
     flat_board = [cell for row in board for cell in row]

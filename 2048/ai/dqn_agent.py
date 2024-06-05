@@ -23,21 +23,10 @@ class DQNAgent:
         self.actions = ['w', 'a', 's', 'd']
         self.rewards_history = []
 
-    def conv_block(self, input_dim, output_dim):
-        d = output_dim // 4
-        inputs = Input(shape=(4, 4, input_dim))
-        conv1 = Conv2D(d, (1, 1), padding='same', activation='relu')(inputs)
-        conv2 = Conv2D(d, (2, 2), padding='same', activation='relu')(inputs)
-        conv3 = Conv2D(d, (3, 3), padding='same', activation='relu')(inputs)
-        conv4 = Conv2D(d, (4, 4), padding='same', activation='relu')(inputs)
-        outputs = Concatenate()([conv1, conv2, conv3, conv4])
-        return Model(inputs, outputs)
-
     def _build_model(self):
         inputs = Input(shape=(4, 4, 1))
-        x = self.conv_block(1, 256)(inputs)
-        x = self.conv_block(256, 512)(x)
-        x = self.conv_block(512, 1024)(x)
+        x = Conv2D(256, (2, 2), activation='relu')(inputs)
+        x = Conv2D(512, (2, 2), activation='relu')(x)
         x = Flatten()(x)
         x = Dense(1024, activation='relu')(x)
         x = Dropout(0.5)(x)
@@ -54,14 +43,18 @@ class DQNAgent:
 
     def act(self, state):
         if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)
+            action = random.randrange(self.action_size)
+            print(f"Random action: {action}")
+            return action
         act_values = self.model.predict(state)
-        return np.argmax(act_values[0])
+        action = np.argmax(act_values[0])
+        print(f"Predicted action: {action}")
+        return action
 
     def replay(self):
         if len(self.memory) < self.batch_size:
             return
-        
+
         minibatch = random.sample(self.memory, self.batch_size)
         states = np.array([experience[0] for experience in minibatch]).reshape(self.batch_size, 4, 4, 1)
         actions = np.array([experience[1] for experience in minibatch])
@@ -69,16 +62,23 @@ class DQNAgent:
         next_states = np.array([experience[3] for experience in minibatch]).reshape(self.batch_size, 4, 4, 1)
         dones = np.array([experience[4] for experience in minibatch])
         
+        print("Predicting target values")
         target = self.model.predict(states)
+        print("Predicting next state values")
         target_next = self.model.predict(next_states)
+        print("Predicting target model values")
         target_val = self.target_model.predict(next_states)
 
         for i in range(self.batch_size):
+             # Log the initial Q-values
+            print(f"Initial Q-Values for State {i}: {target[i]}")
             if dones[i]:
                 target[i][actions[i]] = rewards[i]
             else:
                 a = np.argmax(target_next[i])
                 target[i][actions[i]] = rewards[i] + self.gamma * target_val[i][a]
+              # Log the updated Q-values
+            print(f"Updated Q-Values for State {i}: {target[i]}")
 
         self.model.fit(states, target, epochs=1, verbose=0)
 
