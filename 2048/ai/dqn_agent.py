@@ -22,6 +22,7 @@ class DQNAgent:
         self.update_target_model()
         self.actions = ['w', 'a', 's', 'd']
         self.rewards_history = []
+        
 
     def _build_model(self):
         inputs = Input(shape=(4, 4, 1))
@@ -34,7 +35,44 @@ class DQNAgent:
         model = Model(inputs, outputs)
         model.compile(loss='mse', optimizer=Adam(learning_rate=self.learning_rate))
         return model
+    
+    def choose_action(self, state):
+        if np.random.rand() <= self.epsilon:
+            return random.choice([0, 1, 2, 3])  # Assuming 0, 1, 2, 3 correspond to ['w', 'a', 's', 'd']
 
+        state = state.reshape((1, 4, 4, 1))  # Reshape state to fit the network input
+        q_values = self.model.predict(state)
+        return np.argmax(q_values[0])
+    
+    def update(self, state, action, reward, next_state, done):
+        # Ensure state and next_state are numpy arrays with the correct shape
+        state = np.array(state).reshape((1, 4, 4, 1))
+        next_state = np.array(next_state).reshape((1, 4, 4, 1))
+
+        # Predict the current and future Q-values
+        current_target = self.model.predict(state)[0]
+        future_q_value = np.amax(self.target_model.predict(next_state)[0])
+
+        # Debugging output
+        print(f"Current Q-values: {current_target}, Action chosen: {action}, Reward: {reward}")
+
+        # Check action type and range
+        if not isinstance(action, int) or action < 0 or action >= len(current_target):
+            print(f"Error: Invalid action index '{action}'")
+            return  # You might want to handle this case more gracefully
+
+        # Update the Q-value for the action taken
+        if done:
+            current_target[action] = reward
+        else:
+            current_target[action] = reward + self.gamma * future_q_value
+
+        # Fit the model with the updated Q-values
+        self.model.fit(state, current_target.reshape((1, self.action_size)), epochs=1, verbose=0)
+
+
+
+    
     def update_target_model(self):
         self.target_model.set_weights(self.model.get_weights())
 

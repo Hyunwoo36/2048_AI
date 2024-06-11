@@ -140,7 +140,11 @@ def play_game(agent, theme, difficulty, ai_mode):
 
     while status == "PLAY":
         state = agent.get_state(board)
-        action = agent.choose_action(state)
+        # q learning
+        # action = agent.choose_action(state)
+        # DQN
+        action_index = agent.choose_action(state)
+        action = agent.actions[action_index]
         print(f"Action: {action}, State: {state}")
         print("Board before action:")
         print(board)
@@ -150,7 +154,9 @@ def play_game(agent, theme, difficulty, ai_mode):
             reward = calculate_reward(board, new_board, valid_move)
             done = status != "PLAY"
             next_state = agent.get_state(new_board)
-            agent.update(state, action, reward, next_state)
+            # q leraning
+            # agent.update(state, action, reward, next_state)
+            agent.update(state, action, reward, next_state, done)
             print(f"State: {state}, Action: {action}, Reward: {reward}, Next State: {next_state}, Done: {done}")
             print("Board after action:")
             print(new_board)
@@ -165,7 +171,11 @@ def play_game(agent, theme, difficulty, ai_mode):
             print("Invalid move.")
             invalid_moves += 1
             steps_without_improvement += 1
-            agent.update(state, action, -10, state)  # Penalize invalid move
+             # Penalize invalid move
+            # q learning
+            # agent.update(state, action, -10, state) 
+            # DQN
+            agent.update(state, action_index, -10, state, True)
         pygame.event.pump()
 
         if steps_without_improvement >= max_steps_without_improvement:

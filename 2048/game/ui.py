@@ -3,6 +3,7 @@ from pygame.locals import *
 import statistics
 from .game import run_games
 from ai.qlearning_agent import QLearningAgent
+from ai.dqn_agent import DQNAgent
 
 class Button:
     def __init__(self, colour, x, y, width, height, text=""):
@@ -102,14 +103,21 @@ def show_menu(constants, screen, my_font):
                             ai_mode = key.lower().replace("-", "").replace(" ", "_")
                             ai_mode_selected = True
                             
-                            if key == "qlearning":
+                            if key == "DQN":
+                                # Initialize the DQN agent here with appropriate parameters
+                                state_size = (4, 4, 1)  # This needs to be defined based on your environment
+                                action_size = 4  # Adjust as necessary
+                                agent = DQNAgent(state_size, action_size)
+                                print("DQN agent initialized.")
+                            
+                            if key == "Q-Learning":
                                 agent = QLearningAgent()  # Reinitialize the QLearningAgent
                                 print("Q-Learning agent initialized.")
                                 
                         if key == "start" and ai_mode_selected:
                             if ai_mode == "qlearning" and agent is None:
                                 agent = QLearningAgent()  # Ensure the agent is initialized if not already
-                            scores = run_games(100, theme, difficulty, ai_mode, agent)  # Pass the agent
+                            scores = run_games(10, theme, difficulty, ai_mode, agent)  # Pass the agent
                             average_score = statistics.mean(scores)
                             print(f"Average score for {ai_mode}: {average_score}")
                             print(f"All scores for {ai_mode}: ", scores)
