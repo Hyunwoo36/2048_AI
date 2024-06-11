@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 import statistics
 from .game import run_games
+from ai.qlearning_agent import QLearningAgent
 
 class Button:
     def __init__(self, colour, x, y, width, height, text=""):
@@ -58,6 +59,7 @@ def show_menu(constants, screen, my_font):
     difficulty = 2048
     ai_mode_selected = False
     ai_mode = None
+    agent = None
 
     button_width = 125
     button_height = 50
@@ -99,9 +101,15 @@ def show_menu(constants, screen, my_font):
                         if key in ["A*", "E-MAX", "Random", "Q-Learning", "DQN"]:
                             ai_mode = key.lower().replace("-", "").replace(" ", "_")
                             ai_mode_selected = True
-
+                            
+                            if key == "qlearning":
+                                agent = QLearningAgent()  # Reinitialize the QLearningAgent
+                                print("Q-Learning agent initialized.")
+                                
                         if key == "start" and ai_mode_selected:
-                            scores = run_games(10, theme, difficulty, ai_mode)
+                            if ai_mode == "qlearning" and agent is None:
+                                agent = QLearningAgent()  # Ensure the agent is initialized if not already
+                            scores = run_games(100, theme, difficulty, ai_mode, agent)  # Pass the agent
                             average_score = statistics.mean(scores)
                             print(f"Average score for {ai_mode}: {average_score}")
                             print(f"All scores for {ai_mode}: ", scores)
