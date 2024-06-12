@@ -11,6 +11,6 @@ class RandomAgent:
         # Return the index of the action instead of the action itself
         return random.randint(0, len(self.actions) - 1)
 
-    def update(self, state, action, reward, next_state, done):
+    def update(self, state, action, reward, next_state):
         # RandomAgent does not update its strategy based on gameplay
         pass

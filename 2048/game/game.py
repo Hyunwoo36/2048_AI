@@ -8,6 +8,7 @@ from .logic import *
 from ai.ai_agent import AI2048
 from ai.qlearning_agent import QLearningAgent
 from ai.dqn_agent import DQNAgent
+from ai.random import RandomAgent
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -151,8 +152,14 @@ def play_game(agent, theme, difficulty, ai_mode):
             reward = calculate_reward(board, new_board, valid_move)
             done = status != "PLAY"
             next_state = agent.get_state(new_board)
-            agent.update(state, action, reward, next_state)
+            # agent.update(state, action, reward, next_state)
             # agent.update(state, action_index, reward, next_state)
+            if isinstance(agent, DQNAgent):
+                agent.update(state, action_index, reward, next_state, done)
+            elif isinstance(agent, RandomAgent):
+                # RandomAgent does not update its strategy based on gameplay
+                pass
+            
             print(f"State: {state}, Action: {action}, Reward: {reward}, Next State: {next_state}, Done: {done}")
             print("Board after action:")
             print(new_board)
@@ -166,7 +173,13 @@ def play_game(agent, theme, difficulty, ai_mode):
         else:
             print("Invalid move.")
             invalid_moves += 1
-            agent.update(state, action_index, -10, state)  # Penalize invalid moves
+            # Ensure RandomAgent does not receive an unexpected 'done' parameter
+            if isinstance(agent, DQNAgent):
+                agent.update(state, action_index, -10, state, True)
+            elif isinstance(agent, RandomAgent):
+                # No action needed for RandomAgent on invalid moves
+                pass
+
             steps_without_improvement += 1
 
         pygame.event.pump()
