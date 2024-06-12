@@ -18,27 +18,43 @@ def improved_snake_heuristic(board):
     return sum(board[i][j] * weights[i][j] for i in range(4) for j in range(4))
 
 def monotonicity_heuristic(board):
-    scores = [0, 0, 0, 0]
+    increasing_rows = 0
+    decreasing_rows = 0
+    increasing_cols = 0
+    decreasing_cols = 0
+
     for row in board:
-        for i in range(3):
-            if row[i] > row[i + 1]:
-                scores[0] += row[i] - row[i + 1]
-            else:
-                scores[1] += row[i + 1] - row[i]
+        increasing_rows += sum(row[i] <= row[i + 1] for i in range(3))
+        decreasing_rows += sum(row[i] >= row[i + 1] for i in range(3))
 
     for col in range(4):
-        for i in range(3):
-            if board[i][col] > board[i + 1][col]:
-                scores[2] += board[i][col] - board[i + 1][col]
-            else:
-                scores[3] += board[i + 1][col] - board[i][col]
-    return min(scores[0], scores[1]) + min(scores[2], scores[3])
+        column_values = [board[row][col] for row in range(4)]
+        increasing_cols += sum(column_values[i] <= column_values[i + 1] for i in range(3))
+        decreasing_cols += sum(column_values[i] >= column_values[i + 1] for i in range(3))
+
+    return max(increasing_rows, decreasing_rows) + max(increasing_cols, decreasing_cols)
 def smoothness_heuristic(board):
     smoothness = 0
     for i in range(4):
         for j in range(3):
             smoothness -= abs(board[i][j] - board[i][j + 1])
             smoothness -= abs(board[j][i] - board[j + 1][i])
+            # Penalize differences with adjacent edges and corners more
+            if i == 0 or i == 3 or j == 0 or j == 3:
+                smoothness -= abs(board[i][j] - board[i - 1][j]) * 0.5
+                smoothness -= abs(board[i][j] - board[i][j - 1]) * 0.5
+                if i == 0 and j == 0:
+                    smoothness -= abs(board[i][j] - board[i + 1][j]) * 0.5
+                    smoothness -= abs(board[i][j] - board[i][j + 1]) * 0.5
+                elif i == 0 and j == 3:
+                    smoothness -= abs(board[i][j] - board[i + 1][j]) * 0.5
+                    smoothness -= abs(board[i][j] - board[i][j - 1]) * 0.5
+                elif i == 3 and j == 0:
+                    smoothness -= abs(board[i][j] - board[i - 1][j]) * 0.5
+                    smoothness -= abs(board[i][j] - board[i][j + 1]) * 0.5
+                elif i == 3 and j == 3:
+                    smoothness -= abs(board[i][j] - board[i - 1][j]) * 0.5
+                    smoothness -= abs(board[i][j] - board[i][j - 1]) * 0.5
     return smoothness
 
 def empty_tiles_heuristic(board):
@@ -54,7 +70,7 @@ def merge_potential_heuristic(board):
                 merge_score += board[i][j]
     return merge_score
 class ExpectimaxAgent:
-    def __init__(self, depth=2):
+    def __init__(self, depth=4):
         self.depth = depth
         self.actions = ["w", "a", "s", "d"]
 
@@ -64,24 +80,27 @@ class ExpectimaxAgent:
         for action in self.actions:
             simBoard = move(action, deepcopy(board))
             if simBoard != board:
-                value = self.expectimax(simBoard, self.depth, False)
+                value = self.expectimax(simBoard, self.depth, -INF, INF, False)
                 if value > bestScore:
                     bestScore = value
                     bestNextMove = action
         return bestNextMove
 
-    def expectimax(self, board, depth, is_maximizing):
+    def expectimax(self, board, depth, alpha, beta, is_maximizing):
         status = check_game_status(board)
         if status != "PLAY" or depth == 0:
             return self.evaluate_board(board)
 
         if is_maximizing:
-            max_value = -np.inf
+            max_value = -INF
             for action in self.actions:
                 new_board = move(action, deepcopy(board))
                 if new_board != board:
-                    value = self.expectimax(new_board, depth - 0.5, False)
+                    value = self.expectimax(new_board, depth - 1, alpha, beta, False)
                     max_value = max(max_value, value)
+                    alpha = max(alpha, value)
+                    if beta <= alpha:
+                        break  # Beta cutoff
             return max_value
         else:
             empty_tiles = [(i, j) for i in range(4) for j in range(4) if board[i][j] == 0]
@@ -94,12 +113,22 @@ class ExpectimaxAgent:
                     new_board = deepcopy(board)
                     new_board[tile[0]][tile[1]] = new_tile
                     prob = 0.9 if new_tile == 2 else 0.1
-                    value += prob * self.expectimax(new_board, depth - 0.5, True)
+                    value += prob * self.expectimax(new_board, depth - 1, alpha, beta, True)
+                    beta = min(beta, value)
+                    if beta <= alpha:
+                        break  # Alpha cutoff
             return value
 
     def evaluate_board(self, board):
-     return (0.5 * improved_snake_heuristic(board) +
-            0 * monotonicity_heuristic(board) +
-            0 * smoothness_heuristic(board) +
-            0.5 * empty_tiles_heuristic(board) +
-            0 * merge_potential_heuristic(board))
+        return (0.5 * improved_snake_heuristic(board) +
+                0.25 * monotonicity_heuristic(board) +
+                0.25 * smoothness_heuristic(board) +
+                0.0 * empty_tiles_heuristic(board) +
+                0.0 * merge_potential_heuristic(board))
+
+    def evaluate_board(self, board):
+     return (.25 * improved_snake_heuristic(board) +
+            .25 * monotonicity_heuristic(board) +
+            .5 * smoothness_heuristic(board) +
+            .0 * empty_tiles_heuristic(board) +
+            .0 * merge_potential_heuristic(board))
