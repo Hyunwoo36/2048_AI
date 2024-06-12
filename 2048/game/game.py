@@ -141,7 +141,7 @@ def play_game(agent, theme, difficulty, ai_mode):
     while status == "PLAY":
         state = agent.get_state(board)
         action_index = agent.choose_action(state)
-        action = agent.actions[action_index]  # Convert index to action command
+        action = agent.actions[action_index]
         print(f"Action: {action}, State: {state}")
         print("Board before action:")
         print(board)
@@ -151,7 +151,8 @@ def play_game(agent, theme, difficulty, ai_mode):
             reward = calculate_reward(board, new_board, valid_move)
             done = status != "PLAY"
             next_state = agent.get_state(new_board)
-            agent.update(state, action_index, reward, next_state, done)
+            agent.update(state, action, reward, next_state)
+            # agent.update(state, action_index, reward, next_state)
             print(f"State: {state}, Action: {action}, Reward: {reward}, Next State: {next_state}, Done: {done}")
             print("Board after action:")
             print(new_board)
@@ -165,7 +166,7 @@ def play_game(agent, theme, difficulty, ai_mode):
         else:
             print("Invalid move.")
             invalid_moves += 1
-            agent.update(state, action_index, -10, state, True)  # Penalize invalid moves
+            agent.update(state, action_index, -10, state)  # Penalize invalid moves
             steps_without_improvement += 1
 
         pygame.event.pump()

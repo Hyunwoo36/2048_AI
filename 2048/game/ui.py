@@ -4,6 +4,7 @@ import statistics
 from .game import run_games
 from ai.qlearning_agent import QLearningAgent
 from ai.dqn_agent import DQNAgent
+from ai.random import RandomAgent
 
 class Button:
     def __init__(self, colour, x, y, width, height, text=""):
@@ -69,11 +70,11 @@ def show_menu(constants, screen, my_font):
     first_button_x = 30
 
     buttons = {
-        "A*": Button(tuple(constants["colour"][theme]["2048"]), first_button_x, button_start_y, button_width, button_height, "A*"),
-        "E-MAX": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + button_width + button_spacing, button_start_y, button_width, button_height, "E-MAX"),
-        "Random": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + 2 * (button_width + button_spacing), button_start_y, button_width, button_height, "Random"),
-        "Q-Learning": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + 3 * (button_width + button_spacing), button_start_y, button_width, button_height, "Q-Learning"),
-        "DQN": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + 4 * (button_width + button_spacing), button_start_y, button_width, button_height, "DQN"),
+        # "A*": Button(tuple(constants["colour"][theme]["2048"]), first_button_x, button_start_y, button_width, button_height, "A*"),
+        "E-MAX": Button(tuple(constants["colour"][theme]["2048"]), first_button_x, button_start_y, button_width, button_height, "E-MAX"),
+        "Random": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + (button_width + button_spacing), button_start_y, button_width, button_height, "Random"),
+        "Q-Learning": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + 2 * (button_width + button_spacing), button_start_y, button_width, button_height, "Q-Learning"),
+        "DQN": Button(tuple(constants["colour"][theme]["2048"]), first_button_x + 3 * (button_width + button_spacing), button_start_y, button_width, button_height, "DQN"),
         "start": Button(tuple(constants["colour"][theme]["2048"]), 180, 450, 200, 50, "Start AI Game")
     }
 
@@ -99,19 +100,19 @@ def show_menu(constants, screen, my_font):
 
                 for key, button in buttons.items():
                     if button.is_over(pos):
-                        if key in ["A*", "E-MAX", "Random", "Q-Learning", "DQN"]:
+                        if key in ["E-MAX", "Random", "Q-Learning", "DQN"]:
                             ai_mode = key.lower().replace("-", "").replace(" ", "_")
                             ai_mode_selected = True
-                            
-                            if key == "DQN":
-                                # Initialize the DQN agent here with appropriate parameters
-                                state_size = (4, 4, 1)  # This needs to be defined based on your environment
-                                action_size = 4  # Adjust as necessary
+                            if key == "Random":
+                                agent = RandomAgent()
+                                print("Random agent initialized.")
+                            elif key == "DQN":
+                                state_size = (4, 4, 1)
+                                action_size = 4
                                 agent = DQNAgent(state_size, action_size)
                                 print("DQN agent initialized.")
-                            
-                            if key == "Q-Learning":
-                                agent = QLearningAgent()  # Reinitialize the QLearningAgent
+                            elif key == "Q-Learning":
+                                agent = QLearningAgent()
                                 print("Q-Learning agent initialized.")
                                 
                         if key == "start" and ai_mode_selected:
