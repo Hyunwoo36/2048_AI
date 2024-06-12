@@ -98,8 +98,31 @@ class ExpectimaxAgent:
             return value
 
     def evaluate_board(self, board):
-     return (0.5 * improved_snake_heuristic(board) +
-            0 * monotonicity_heuristic(board) +
-            0 * smoothness_heuristic(board) +
-            0.5 * empty_tiles_heuristic(board) +
-            0 * merge_potential_heuristic(board))
+     
+        max_tile = max(max(row) for row in board)
+        
+        # Dynamic weight adjustment based on the highest tile value
+        if max_tile >= 1024:
+            snake_weight = 0.125
+            monotonicity_weight = 0.125
+            smoothness_weight = 0.125
+            empty_tiles_weight = 0.25
+            merge_potential_weight = 0.01
+        elif max_tile >= 512:
+            snake_weight = 0.4
+            monotonicity_weight = 0.25
+            smoothness_weight = 0.4
+            empty_tiles_weight = 0.1
+            merge_potential_weight = 0
+        else:
+            snake_weight = 0.5
+            monotonicity_weight = 0.25
+            smoothness_weight = 0.5
+            empty_tiles_weight = 0
+            merge_potential_weight = 0
+        
+        return (snake_weight * improved_snake_heuristic(board) +
+                monotonicity_weight * monotonicity_heuristic(board) +
+                smoothness_weight * smoothness_heuristic(board) +
+                empty_tiles_weight * empty_tiles_heuristic(board) +
+                merge_potential_weight * merge_potential_heuristic(board))
