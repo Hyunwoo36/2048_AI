@@ -167,7 +167,7 @@ def play_game(agent, theme, difficulty, ai_mode):
             display(board, theme)
             status = check_game_status(board, difficulty)
             board, status = win_check(board, status, theme, text_col)
-            final_score = max(max(row) for row in board)
+            final_score = sum(sum(row) for row in board)
             steps_without_improvement = 0 if max(max(row) for row in board) > last_max_tile else steps_without_improvement + 1
             last_max_tile = max(max(row) for row in board)
         else:

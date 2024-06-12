@@ -118,7 +118,7 @@ def show_menu(constants, screen, my_font):
                         if key == "start" and ai_mode_selected:
                             if ai_mode == "qlearning" and agent is None:
                                 agent = QLearningAgent()  # Ensure the agent is initialized if not already
-                            scores = run_games(10, theme, difficulty, ai_mode, agent)  # Pass the agent
+                            scores = run_games(100, theme, difficulty, ai_mode, agent)  # Pass the agent
                             average_score = statistics.mean(scores)
                             print(f"Average score for {ai_mode}: {average_score}")
                             print(f"All scores for {ai_mode}: ", scores)
