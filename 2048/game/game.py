@@ -25,7 +25,7 @@ def win_check(board, status, theme, text_col):
         msg = "YOU WIN!" if status == "WIN" else "GAME OVER!"
         screen.blit(my_font.render(msg, 1, text_col), (140, 180))
         pygame.display.update()
-        time.sleep(1)
+        time.sleep(5)
     return (board, status)
 
 def new_game(theme, text_col):
