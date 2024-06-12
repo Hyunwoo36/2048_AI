@@ -134,29 +134,24 @@ def play_game(agent, theme, difficulty, ai_mode):
     status = "PLAY"
     final_score = 0
     invalid_moves = 0
-    max_steps_without_improvement = 50
+    max_steps_without_improvement = 100
     steps_without_improvement = 0
     last_max_tile = 0
 
     while status == "PLAY":
         state = agent.get_state(board)
-        # q learning
-        # action = agent.choose_action(state)
-        # DQN
         action_index = agent.choose_action(state)
-        action = agent.actions[action_index]
+        action = agent.actions[action_index]  # Convert index to action command
         print(f"Action: {action}, State: {state}")
         print("Board before action:")
         print(board)
-        new_board = deepcopy(board)
-        new_board, valid_move = move(action, new_board)
+
+        new_board, valid_move = move(action, deepcopy(board))
         if valid_move:
             reward = calculate_reward(board, new_board, valid_move)
             done = status != "PLAY"
             next_state = agent.get_state(new_board)
-            # q leraning
-            # agent.update(state, action, reward, next_state)
-            agent.update(state, action, reward, next_state, done)
+            agent.update(state, action_index, reward, next_state, done)
             print(f"State: {state}, Action: {action}, Reward: {reward}, Next State: {next_state}, Done: {done}")
             print("Board after action:")
             print(new_board)
@@ -170,19 +165,16 @@ def play_game(agent, theme, difficulty, ai_mode):
         else:
             print("Invalid move.")
             invalid_moves += 1
+            agent.update(state, action_index, -10, state, True)  # Penalize invalid moves
             steps_without_improvement += 1
-             # Penalize invalid move
-            # q learning
-            # agent.update(state, action, -10, state) 
-            # DQN
-            agent.update(state, action_index, -10, state, True)
-        pygame.event.pump()
 
+        pygame.event.pump()
         if steps_without_improvement >= max_steps_without_improvement:
             break
 
     print(f"Episode completed, Total Reward: {final_score}, Invalid Moves: {invalid_moves}")
     return final_score
+
 
 def run_games(num_games, theme, difficulty, ai_mode, agent):
     scores = []

@@ -45,35 +45,33 @@ class DQNAgent:
         return model
 
     def choose_action(self, state):
-        if np.random.rand() <= self.epsilon:
-            return random.choice([0, 1, 2, 3])  # Assuming 0, 1, 2, 3 correspond to ['w', 'a', 's', 'd']
-        state = np.array(state).reshape((1, 4, 4, 1))
-        q_values = self.model.predict(state)
-        return np.argmax(q_values[0])
+        state_reshaped = np.array(state).reshape((1, 4, 4, 1))
+        q_values = self.model.predict(state_reshaped)
+        if np.random.rand() > self.epsilon:
+            action_index = np.argmax(q_values[0])
+            print(f"Predicted Q-values: {q_values}, Chosen action: {self.actions[action_index]} (Non-random choice)")
+        else:
+            action_index = np.random.choice([0, 1, 2, 3])
+            print(f"Randomly chosen action: {self.actions[action_index]} due to exploration")
+        return action_index
 
-    def update(self, state, action, reward, next_state, done):
-        # Ensure state and next_state are numpy arrays with the correct shape
+
+
+    def update(self, state, action_index, reward, next_state, done):
         state = np.array(state).reshape((1, 4, 4, 1))
         next_state = np.array(next_state).reshape((1, 4, 4, 1))
 
-        # Predict the current Q-values and the future Q-values from the models
         current_q = self.model.predict(state)[0]
         future_q = np.max(self.target_model.predict(next_state)[0])
 
-        # Debugging output to understand what is happening
-        print(f"Current Q-values: {current_q}, Action chosen: {action}, Reward: {reward}")
-
-        # Check action type and range to prevent IndexError
-        if isinstance(action, int) and 0 <= action < len(current_q):
-            # Update the Q-value for the action taken
-            if done:
-                current_q[action] = reward
-            else:
-                current_q[action] = reward + self.gamma * future_q
-            # Fit model with the updated Q-values
-            self.model.fit(state, current_q.reshape((1, self.action_size)), epochs=1, verbose=0)
+        if done:
+            current_q[action_index] = reward
         else:
-            print(f"Error: Invalid action index '{action}'")
+            current_q[action_index] = reward + self.gamma * future_q
+
+        self.model.fit(state, current_q.reshape((1, self.action_size)), epochs=1, verbose=0)
+
+
 
 
     def update_target_model(self):
