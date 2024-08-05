@@ -1,6 +1,20 @@
 # COGS188 Project template
-Fork this repo.
-
-Once you do it is is your repo. You are free to manage the repo as you see fit, edit this README, add data files, add scripts, etc. 
-
-Also, you are free and encouraged to share this project after the course and to add it to your portfolio. Just be sure to fork it to your GitHub at the end of the quarter!
+ "### Instruction on running code\n",
+    "\n",
+    "Running the Expectimax Algorithm:\n",
+    "\n",
+    "- Clone the GitHub repository and ensure you are on the main branch.\n",
+    "- Navigate to the 2048 folder.\n",
+    "- Install all necessary libraries.\n",
+    "- Execute the game by typing python main.py in your terminal.\n",
+    "- Once the game interface opens, click on the 'ExpectiMax' button to start the game with the Expectimax algorithm.\n",
+    "\n",
+    "\n",
+    "For running DQN or random algorithm:\n",
+    "\n",
+    "- With cloned github repo, switch to harry/merging/random-q\n",
+    "- With the GitHub repository already cloned, switch to the harry/merging/random-q branch.\n",
+    "- Navigate to the 2048 folder.\n",
+    "- Install all required libraries\n",
+    "- Execute the game by typing python main.py in your terminal.\n",
+    "- Once the game interface opens, click on either the 'Random' or \"DQN\" button to start the game with according algorithm.\n"
